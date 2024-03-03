@@ -13,30 +13,23 @@ sqlDB, err := sql.Open("mysql", dsn)
 
 db := bun.NewDB(sqlDB, mysqldialect.New())
 
-// Start a transaction
 trans, err := NewTransaction(db)
 if err != nil {
     log.Fatal(err)
 }
 
-err = trans.Exec(func(ctx context.Context, tx *bun.Tx) error {
-    if err := test1(ctx, tx); err != nil {
-        return err
-    }
-    if err := test2(ctx, tx); err != nil {
-        return err
-    }
-    return test3(ctx, tx)
-})
-
+tx, err := trans.Init()
 if err != nil {
-    log.Println("Error executing transaction:", err)
-} else {
-    // Commit the transaction if no errors occurred
-    if err := trans.CommitTx(); err != nil {
-        log.Println("Error committing transaction:", err)
-    } else {
-        log.Println("Transaction committed successfully!")
-    }
+    log.Fatal(err)
 }
+
+err = trans.Exec(tx, func(ctx context.Context, tx *bun.Tx) error {
+if err := test1(ctx, tx); err != nil {
+    return err
+}
+if err := test2(ctx, tx); err != nil {
+    return err
+}
+return test3(ctx, tx)
+})
 ```

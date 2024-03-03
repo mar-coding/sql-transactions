@@ -16,13 +16,17 @@ func ExampleNewTransaction() {
 
 	db := bun.NewDB(sqlDB, mysqldialect.New())
 
-	// Start a transaction
 	trans, err := NewTransaction(db)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = trans.Exec(func(ctx context.Context, tx *bun.Tx) error {
+	tx, err := trans.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = trans.Exec(tx, func(ctx context.Context, tx *bun.Tx) error {
 		if err := test1(ctx, tx); err != nil {
 			return err
 		}

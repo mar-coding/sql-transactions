@@ -8,25 +8,23 @@ import (
 )
 
 type Transaction struct {
-	DB *bun.DB
-
-	tx  *bun.Tx
 	ctx context.Context
+
+	DB *bun.DB
 }
 
-func NewTransaction(db *bun.DB) (*Transaction, error) {
-	return &Transaction{DB: db}, nil
+func NewTransaction(db *bun.DB) (Transaction, error) {
+	return Transaction{DB: db}, nil
 }
 
-func (t *Transaction) Init() error {
+func (t *Transaction) Init() (*bun.Tx, error) {
 	ctx := context.Background()
 	tx, err := t.DB.BeginTx(ctx, nil)
-	t.tx = &tx
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	return nil
+	return &tx, nil
 }
 
 func (t *Transaction) GetContext() context.Context {
@@ -35,27 +33,27 @@ func (t *Transaction) GetContext() context.Context {
 
 // Exec Execute a function within the transaction context and if there is no
 // errors in it, it will commit the transaction, otherwise it will roll it back
-func (t *Transaction) Exec(fn func(context.Context, *bun.Tx) error) error {
-	err := fn(t.ctx, t.tx)
+func (t *Transaction) Exec(tx *bun.Tx, fn func(context.Context, *bun.Tx) error) error {
+	err := fn(t.ctx, tx)
 	if err != nil {
-		t.rollbackTx()
+		t.rollbackTx(tx)
 		return errors.New("error executing transaction")
 	} else {
-		if err := t.commitTx(); err != nil {
-			t.rollbackTx()
+		if err := t.commitTx(tx); err != nil {
+			t.rollbackTx(tx)
 			return errors.New("error committing transaction")
 		}
 	}
 	return nil
 }
 
-func (t *Transaction) commitTx() error {
-	if err := t.tx.Commit(); err != nil {
+func (t *Transaction) commitTx(tx *bun.Tx) error {
+	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 	return nil
 }
 
-func (t *Transaction) rollbackTx() {
-	_ = t.tx.Rollback()
+func (t *Transaction) rollbackTx(tx *bun.Tx) {
+	_ = tx.Rollback()
 }
