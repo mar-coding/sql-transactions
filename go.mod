@@ -3,7 +3,6 @@ module github.com/mar-coding/sql-transactions
 go 1.21.5
 
 require (
-	github.com/go-sql-driver/mysql v1.7.1
 	github.com/uptrace/bun v1.1.17
 	github.com/uptrace/bun/dialect/mysqldialect v1.1.17
 )

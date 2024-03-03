@@ -31,17 +31,6 @@ func ExampleNewTransaction() {
 		}
 		return test3(ctx, tx)
 	})
-
-	if err != nil {
-		log.Println("Error executing transaction:", err)
-	} else {
-		// Commit the transaction if no errors occurred
-		if err := trans.CommitTx(); err != nil {
-			log.Println("Error committing transaction:", err)
-		} else {
-			log.Println("Transaction committed successfully!")
-		}
-	}
 }
 
 func test1(ctx context.Context, tx *bun.Tx) error {
